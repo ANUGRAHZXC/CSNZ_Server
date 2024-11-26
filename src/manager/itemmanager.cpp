@@ -2004,6 +2004,12 @@ void CItemManager::InsertExp(IUser* user, CUserInventoryItem& targetItem, vector
 		for (auto& i : items)
 		{
 			int grade = g_pItemTable->GetCell<int>("ItemGrade", to_string(i.m_nItemID));
+			
+			// Handle the new range of item IDs
+			if (i.m_nItemID >= 5228 && i.m_nItemID <= 5249)
+			{
+				grade = 4; // Assign grade 4 to these IDs (Similar like WeaponReinforceExp100)
+			}
 			switch (i.m_nItemID)
 			{
 			case 8481: // WeaponReinforceExp100
@@ -2017,17 +2023,17 @@ void CItemManager::InsertExp(IUser* user, CUserInventoryItem& targetItem, vector
 				break;
 			}
 
-			if (!grade)
-			{
-				string targetItemName = g_pItemTable->GetCell<string>("Name", to_string(targetItem.m_nItemID));
-				string enhName = g_pItemTable->GetCell<string>("Name", to_string(i.m_nItemID));
-				if (enhName.find("Enh") == 0)
-				{
-					g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "this material is under dev");
-					// TODO: get itemID of original weapon from enhance material (like Enhbuffm4 -> buffm4 -> 809)
-					//grade = g_pItemTable->GetRowValueByItemName<int>("Grade", enhName.substr(3));
-				}
-			}
+			//if (!grade)
+			//{
+			//	string targetItemName = g_pItemTable->GetCell<string>("Name", to_string(targetItem.m_nItemID));
+			//	string enhName = g_pItemTable->GetCell<string>("Name", to_string(i.m_nItemID));
+			//	if (enhName.find("Enh") == 0)
+			//	{
+			//		g_PacketManager.SendUMsgNoticeMsgBoxToUuid(user->GetExtendedSocket(), "Test material with ENH names have grade = 1 (10 EXP)");
+			//		// TODO: get itemID of original weapon from enhance material (like Enhbuffm4 -> buffm4 -> 809)
+			//		//grade = g_pItemTable->GetRowValueByItemName<int>("Grade", enhName.substr(3));
+			//	}
+			//}
 
 			totalExp += i.m_nEnhancementLevel ? itemsExp[grade] * i.m_nEnhancementLevel * 1.4 : itemsExp[grade];
 			if (targetItem.m_nItemID == i.m_nItemID)
@@ -2194,8 +2200,10 @@ bool CItemManager::OnEnhancementRequest(IUser* user, CReceivePacket* msg)
 			result.status = EnhanceStatus::ENHANCE_FAILURE;
 
 			targetItem.m_nEnhancementExp = 0; // reset enhance exp
+			targetItem.m_nEnhancementLevel = 0; // reset enhance level
+			targetItem.m_nEnhanceValue = 0; // reset enhance value
 
-			flag |= UITEM_FLAG_ENHANCEMENTEXP;
+			flag |= UITEM_FLAG_ENHANCEMENTLEVEL | UITEM_FLAG_ENHANCEMENTEXP | UITEM_FLAG_ENHANCEVALUE;
 		}
 
 		if (itemEnhLevel == 8)
